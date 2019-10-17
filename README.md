@@ -55,7 +55,20 @@ func main() {
     for _, sample := range input {
         lH.RecordValue(sample)
     }
+    
+    fmt.Println( lH.PercentilesPrint( 1, 1.0 ) )
+    // Output:
+    //  Value	Percentile	TotalCount	1/(1-Percentile)
+    //
+    //   460031.000     0.000000            1         1.00
+    //   931839.000     0.500000            5         2.00
+    //  2478079.000     0.750000            8         4.00
+    //  3966975.000     0.875000            9         8.00
+    // 12722175.000     0.937500           10        16.00
+    // 12722175.000     1.000000           10         +Inf
+    // #[Mean    =  2491481.600, StdDeviation   =  3557920.109]
+    // #[Max     = 12722175.000, Total count    =           10]
+    // #[Buckets =           15, SubBuckets     =         2048]
 
-	fmt.Println( lH.PercentilesPrint( 1, 1.0 ) )
 }
 ```
