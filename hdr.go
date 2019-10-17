@@ -278,7 +278,7 @@ func (h *Histogram) CumulativeDistribution() []Bracket {
 
 // CumulativeDistribution returns an ordered list of brackets of the
 // distribution of recorded values.
-func (h *Histogram) CumulativeDistributionWithTicksAndScale(ticksPerHalfDistance int32, valueScale float64) []Bracket {
+func (h *Histogram) CumulativeDistributionWithTicks(ticksPerHalfDistance int32) []Bracket {
 	var result []Bracket
 
 	i := h.pIterator(ticksPerHalfDistance)
@@ -286,7 +286,7 @@ func (h *Histogram) CumulativeDistributionWithTicksAndScale(ticksPerHalfDistance
 		result = append(result, Bracket{
 			Quantile: i.percentile,
 			Count:    i.countToIdx,
-			ValueAt:  int64(float64(i.highestEquivalentValue) * valueScale),
+			ValueAt:  int64(i.highestEquivalentValue),
 		})
 	}
 
@@ -295,7 +295,7 @@ func (h *Histogram) CumulativeDistributionWithTicksAndScale(ticksPerHalfDistance
 
 func (h *Histogram) PercentilesPrint(ticksPerHalfDistance int32, valueScale float64) string {
 	var b bytes.Buffer
-	dist := h.CumulativeDistributionWithTicksAndScale(ticksPerHalfDistance, valueScale)
+	dist := h.CumulativeDistributionWithTicks(ticksPerHalfDistance)
 	b.WriteString(" Value\tPercentile\tTotalCount\t1/(1-Percentile)\n\n")
 	for _, slice := range dist {
 		percentile := slice.Quantile / 100.0
