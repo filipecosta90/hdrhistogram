@@ -44,6 +44,17 @@ type Histogram struct {
 
 // New returns a new Histogram instance capable of tracking values in the given
 // range and with the given amount of precision.
+// Internally, data in HdrHistogram variants is maintained using a concept somewhat
+// similar to that of floating point number representation.
+// Using an exponent a (non-normalized) mantissa to support a wide dynamic range at
+// a high but varying (by exponent value) resolution.
+// Histograms use exponentially increasing bucket value ranges
+// (the parallel of the exponent portion of a floating point number)
+// with each bucket containing a fixed number (per bucket) set of linear sub-buckets
+// (the parallel of a non-normalized mantissa portion of a floating point number).
+// Both dynamic range and resolution are configurable,
+// with maxValue controlling dynamic range,
+// and sigfigs controlling resolution.
 func New(minValue, maxValue int64, sigfigs int) *Histogram {
 	if sigfigs < 1 || 5 < sigfigs {
 		panic(fmt.Errorf("sigfigs must be [1,5] (was %d)", sigfigs))
@@ -105,7 +116,16 @@ func (h *Histogram) ByteSize() int {
 	return 6*8 + 5*4 + len(h.counts)*8
 }
 
-// Merge merges the data stored in the given histogram with the receiver,
+// CountsLen returns the (bucketCount + 1) * (subBucketCount / 2) value,
+// meaning the size of the actual []int64 slice that internally represents data
+// Histograms use exponentially increasing bucket value ranges
+// with each bucket containing a fixed number (per bucket) set of linear sub-buckets
+//
+func (h *Histogram) CountsLen() int32 {
+	return h.countsLen
+}
+
+// Merge merges the data stored in the given bench_histogram with the receiver,
 // returning the number of recorded values which had to be dropped.
 func (h *Histogram) Merge(from *Histogram) (dropped int64) {
 	i := from.rIterator()
@@ -186,7 +206,7 @@ func (h *Histogram) StdDev() float64 {
 	return math.Sqrt(geometricDevTotal / float64(h.totalCount))
 }
 
-// Reset deletes all recorded values and restores the histogram to its original
+// Reset deletes all recorded values and restores the bench_histogram to its original
 // state.
 func (h *Histogram) Reset() {
 	h.totalCount = 0
@@ -318,19 +338,19 @@ func (h *Histogram) PercentilesPrint(ticksPerHalfDistance int32, valueScale floa
 }
 
 // SignificantFigures returns the significant figures used to create the
-// histogram
+// bench_histogram
 func (h *Histogram) SignificantFigures() int64 {
 	return h.significantFigures
 }
 
 // LowestTrackableValue returns the lower bound on values that will be added
-// to the histogram
+// to the bench_histogram
 func (h *Histogram) LowestTrackableValue() int64 {
 	return h.lowestTrackableValue
 }
 
 // HighestTrackableValue returns the upper bound on values that will be added
-// to the histogram
+// to the bench_histogram
 func (h *Histogram) HighestTrackableValue() int64 {
 	return h.highestTrackableValue
 }
