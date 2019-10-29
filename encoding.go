@@ -35,7 +35,7 @@ func Load(encoded string) (rh *Histogram, err error) {
 	if err != nil {
 		return
 	}
-	Cookie, err := extractCookie(decoded)
+	Cookie, err := ExtractCookie(decoded)
 	if err != nil {
 		return
 	}
@@ -59,7 +59,7 @@ func Load(encoded string) (rh *Histogram, err error) {
 	return
 }
 
-func extractCookie(decoded []byte) (Cookie int32, err error) {
+func ExtractCookie(decoded []byte) (Cookie int32, err error) {
 	if len(decoded) < 4 {
 		err = errors.New(fmt.Sprintf("Cookie byte slice needs to have at least 4 Bytes. Got %d", len(decoded)))
 		return
@@ -141,6 +141,60 @@ func EncodeIntoByteBuffer() []byte {
 	//return buffer.position() - initialPosition;
 	return []byte{}
 }
+
+func (rh *Histogram) FillBufferFromCountsArray(buffer []byte) (rbuffer []byte, err error) {
+	rbuffer = buffer
+	// V2 encoding format uses a ZigZag LEB128-64b9B encoded long. Positive values are counts,
+	// while negative values indicate a repeat zero counts.
+	i := rh.iterator()
+	zerosCount := 0
+	for i.next() {
+		count := i.countAtIdx
+
+		if count == 0 {
+			zerosCount++
+		} else {
+			// write the repeat zero counts up to the position
+			if (zerosCount > 1) {
+				rbuffer = EncodeLEB128_64b9B_variant(rbuffer, int64(-zerosCount))
+			}
+			rbuffer = EncodeLEB128_64b9B_variant(rbuffer, count)
+			zerosCount = 0
+
+		}
+	}
+	return
+}
+
+//fillBufferFromCountsArray(ByteBuffer buffer) {
+//final int countsLimit = countsArrayIndex(maxValue) + 1;
+//int srcIndex = 0;
+//
+//while (srcIndex < countsLimit) {
+//// V2 encoding format uses a ZigZag LEB128-64b9B encoded long. Positive values are counts,
+//// while negative values indicate a repeat zero counts.
+//long count = getCountAtIndex(srcIndex++);
+//if (count < 0) {
+//throw new RuntimeException("Cannot encode histogram containing negative counts (" +
+//count + ") at index " + srcIndex + ", corresponding the value range [" +
+//lowestEquivalentValue(valueFromIndex(srcIndex)) + "," +
+//nextNonEquivalentValue(valueFromIndex(srcIndex)) + ")");
+//}
+//// Count trailing 0s (which follow this count):
+//long zerosCount = 0;
+//if (count == 0) {
+//zerosCount = 1;
+//while ((srcIndex < countsLimit) && (getCountAtIndex(srcIndex) == 0)) {
+//zerosCount++;
+//srcIndex++;
+//}
+//}
+//if (zerosCount > 1) {
+//ZigZagEncoding.putLong(buffer, -zerosCount);
+//} else {
+//ZigZagEncoding.putLong(buffer, count);
+//}
+//}
 
 func DecodeLEB128_64b9B_variant(buffer []byte) (s int64, n uint8) {
 	var u uint64 = 0

@@ -1,6 +1,7 @@
 package hdrhistogram_test
 
 import (
+	"fmt"
 	"github.com/filipecosta90/hdrhistogram"
 	"reflect"
 	"testing"
@@ -174,4 +175,38 @@ func TestDecodeLEB128_64b9B_variant(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_ExtractCookie(t *testing.T) {
+	type args struct {
+		decoded []byte
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantCookie int32
+		wantErr    bool
+	}{
+		{"wantError", args{[]byte{2}}, 0, true,},
+		{"extractCookie1", args{[]byte{28, 132, 147, 20}}, 478450452, false,},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotCookie, err := hdrhistogram.ExtractCookie(tt.args.decoded)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ExtractCookie() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotCookie != tt.wantCookie {
+				t.Errorf("ExtractCookie() gotCookie = %v, want %v", gotCookie, tt.wantCookie)
+			}
+		})
+	}
+}
+
+func TestHistogram_FillBufferFromCountsArray(t *testing.T) {
+	rh := getTestDefaultHistogram()
+	slice := make([]byte, 0)
+	slice, _ = rh.FillBufferFromCountsArray(slice)
+	fmt.Println(slice)
 }
