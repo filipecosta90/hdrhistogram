@@ -5,6 +5,7 @@ package hdrhistogram
 
 import (
 	"bytes"
+	//"compress/flate"
 	"fmt"
 	"math"
 )
