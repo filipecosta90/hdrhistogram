@@ -1,6 +1,7 @@
 package hdrhistogram_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"math"
 	"reflect"
 	"testing"
@@ -32,6 +33,15 @@ func TestValueAtQuantile(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
+	// assert the upper bound limit
+	v100 := h.ValueAtQuantile(100.0)
+	v101 := h.ValueAtQuantile(101.0)
+	assert.Equal(t, v100, v101)
+
+	// assert the lower bound limit
+	v0 := h.ValueAtQuantile(0.0)
+	assert.Equal(t, v0, int64(0))
 
 	data := []struct {
 		q float64
@@ -339,11 +349,18 @@ func TestExportImport(t *testing.T) {
 
 func TestEquals(t *testing.T) {
 	h1 := hdrhistogram.New(1, 10000000, 3)
+	h11 := hdrhistogram.New(1, 10000000, 3)
 	for i := 0; i < 1000000; i++ {
 		if err := h1.RecordValue(int64(i)); err != nil {
 			t.Fatal(err)
 		}
 	}
+	for i := 0; i < 999999; i++ {
+		if err := h11.RecordValue(int64(i)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	assert.False(t, h1.Equals(h11))
 
 	h2 := hdrhistogram.New(1, 10000000, 3)
 	for i := 0; i < 10000; i++ {
@@ -362,4 +379,49 @@ func TestEquals(t *testing.T) {
 	if !h1.Equals(h2) {
 		t.Error("Expected Histograms to be equivalent")
 	}
+}
+
+func TestNew_Negative(t *testing.T) {
+	assert.Panics(t, func() {
+		hdrhistogram.New(1, 10000000, 6)
+	}, "The code did not panic")
+}
+
+func TestHistogram_CountsLen(t *testing.T) {
+	hdr1 := hdrhistogram.New(1, 10000000, 1)
+	assert.Equal(t, hdr1.CountsLen(), int32(336))
+	hdr2 := hdrhistogram.New(1, 10000000, 2)
+	assert.Equal(t, hdr2.CountsLen(), int32(2304))
+	hdr3 := hdrhistogram.New(1, 10000000, 3)
+	assert.Equal(t, hdr3.CountsLen(), int32(15360))
+	hdr4 := hdrhistogram.New(1, 10000000, 4)
+	assert.Equal(t, hdr4.CountsLen(), int32(180224))
+	hdr5 := hdrhistogram.New(1, 10000000, 5)
+	assert.Equal(t, hdr5.CountsLen(), int32(1048576))
+}
+
+func TestHistogram_RecordValues_Negative(t *testing.T) {
+	hdr1 := hdrhistogram.New(1, 10000000, 1)
+	err := hdr1.RecordValues(10000000, 10)
+	assert.Nil(t, err)
+	err = hdr1.RecordValues(20000000, 10)
+	assert.NotNil(t, err)
+}
+
+func TestHistogram_CumulativeDistributionWithTicks(t *testing.T) {
+	minv := 0
+	maxv := 100
+	h1 := hdrhistogram.New(int64(minv), int64(maxv), 5)
+	cdfvals := make([]int64, maxv-minv+1, maxv-minv+1)
+	for i := minv; i <= maxv; i++ {
+		if err := h1.RecordValue(int64(i)); err != nil {
+			t.Fatal(err)
+		}
+		cdfvals[i] += int64(i)
+	}
+	cdf := h1.CumulativeDistributionWithTicks(1)
+	assert.Equal(t, int64(0), cdf[0].ValueAt)
+	assert.Equal(t, int64(maxv), cdf[len(cdf)-1].ValueAt)
+	assert.Equal(t, float64(0), cdf[0].Quantile)
+	assert.Equal(t, float64(100), cdf[len(cdf)-1].Quantile)
 }
