@@ -3,15 +3,14 @@
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
-  build: # test with circleci/golang:1.9
+  build: # test with circleci/golang:1.12
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.12
 
     working_directory: /go/src/github.com/filipecosta90/hdrhistogram
     steps:
       - checkout
-      - run: go get -v -t -d ./...
-      - run: go test -v ./. -race -coverprofile=coverage.txt -covermode=atomic
+      - run: make coverage
       - run: bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
 
 workflows:
