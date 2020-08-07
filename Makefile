@@ -23,12 +23,18 @@ checkfmt:
 lint:
 	golangci-lint run
 
+benchmark:
+	$(GOTEST) ./benchmarks/bench_realtime_ops/. -run=XXX -bench=.  -benchtime=100000000x
+	$(GOTEST) ./benchmarks/bench_deferrable_ops/. -run=XXX -bench=.  -benchtime=100000000x
+
 get:
 	GO111MODULE=on $(GOGET) github.com/golangci/golangci-lint/cmd/golangci-lint
 	$(GOGET) -t -v ./...
 
-test: get lint
+fmt:
 	$(GOFMT) ./...
+
+test: get fmt lint
 	$(GOTEST) -race -covermode=atomic ./...
 
 coverage: get test

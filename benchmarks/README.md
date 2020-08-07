@@ -1,9 +1,9 @@
 ## Running the benchmarks
 
 HdrHistogram is designed for recoding histograms of value measurements in latency and performance sensitive applications. 
-With that in mind we've splited the benchmarks into two major groups:
+With that in mind we've split the benchmarks into two major groups:
 - real-time ops : the ops with real-time requirements like recording a value, rotating widowed histograms, etc...
-- deferrable ops : the ones without real-time requirements or events that are non-deterministic regarding it's requirements like histogram creation, or windowed histogram merging that occurs for example once an hour
+- deferrable ops : the ones without real-time requirements or events that are non-deterministic regarding its requirements like histogram creation, or windowed histogram merging that occurs for example once an hour
 
 Measurements show value recording times as low as 11-15 nanoseconds even on local laptop machines. That is, 1,000,000,000 (1 billion) recordings can be made at a total cost of around 15 seconds on modern hardware. A Histogram's memory footprint is constant, with no allocation operations involved in recording data values or in iterating through them. The memory footprint is fixed regardless of the number of data value samples recorded, and depends solely on the dynamic range and precision chosen. 
 
@@ -43,7 +43,7 @@ The amount of work involved in recording a sample is constant, and directly comp
 100,000,000 (100 million) random deterministic insertions 
 ```
 # make sure you're at the correct folder 
-$ cd $GOPATH/src/github.com/filipecosta90/hdrhistogram/bench/bench_realtime_ops
+$ cd $GOPATH/src/github.com/filipecosta90/hdrhistogram/benchmarks/bench_realtime_ops
 $  go test  -run=XXX -bench=.  -benchtime=100000000x
   goos: darwin
   goarch: amd64
@@ -182,7 +182,7 @@ $  go test  -run=XXX -bench=.  -benchtime=100000000x
 Each of the Histograms with a WindowedHistogram is prepopulated with 1,000,000 (1 million) values 
 ```
 # make sure you're at the correct folder 
-$ cd $GOPATH/src/github.com/filipecosta90/hdrhistogram/bench/bench_deferable_ops
+$ cd $GOPATH/src/github.com/filipecosta90/hdrhistogram/benchmarks/bench_deferable_ops
 $ go test  -run=XXX -bench=.  -benchtime=10000x  
   goos: darwin
   goarch: amd64
